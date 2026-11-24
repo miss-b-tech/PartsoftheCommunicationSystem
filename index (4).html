@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Follow the Signal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@600;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* VOICE: upbeat newsroom for 12-year-olds, matching "Choose Your Channel".
+   IDEA: a signal path on a broadcast control board; the message lights up each stage as it travels.
+   PICTURE: the six-component flow diagram up top, with a "Send it" button that animates the message.
+   COLOUR and TYPE: white ground, ink, on-air deep teal header band; teal marks the live stage, violet marks the channel and noise. Libre Franklin + Atkinson Hyperlegible.
+   LAYOUT: header band, explorer, lettered parts A–E stacked, results sheet. */
+:root{
+  color-scheme:light dark;
+  --bg:light-dark(#F6F5F2,#121316);
+  --card:light-dark(#FFFFFF,#1B1D21);
+  --ink:light-dark(#16181B,#ECEDEF);
+  --muted:light-dark(#5A6068,#A3A9B1);
+  --line:light-dark(#D9DBDF,#33363C);
+  --red:light-dark(#0F6E66,#117A70);
+  --red-soft:light-dark(#E2F3F0,#14312E);
+  --red-ink:#FFFFFF;
+  --good:light-dark(#1B7A4C,#52C48D);
+  --good-soft:light-dark(#E3F3EA,#15342A);
+  --bad:light-dark(#B3362E,#F2806F);
+  --bad-soft:light-dark(#FBE8E6,#3D1E1C);
+  --wave:light-dark(#7136B8,#B78CF0);
+  --display:"Libre Franklin","Arial Narrow",Arial,sans-serif;
+  --body:"Atkinson Hyperlegible","Segoe UI",Verdana,sans-serif;
+}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 var(--body);overflow-x:clip}
+h1,h2,h3{font-family:var(--display);font-weight:800;margin:0;text-wrap:balance;line-height:1.05}
+
+.masthead{background:var(--red);color:var(--red-ink);padding:max(env(safe-area-inset-top,0px),28px) max(5vw,16px) 26px}
+.mh-in{max-width:960px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:end}
+.onair{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:800;font-size:14px;border:2px solid currentColor;padding:3px 10px;border-radius:3px;margin-bottom:12px}
+.onair i{width:9px;height:9px;border-radius:50%;background:currentColor;animation:blink 1.6s infinite}
+@keyframes blink{50%{opacity:.25}}
+.masthead h1{font-size:clamp(36px,7vw,56px)}
+.masthead p{margin:10px 0 0;max-width:60ch}
+.idbox{background:rgba(0,0,0,.16);border-radius:6px;padding:12px 14px;display:grid;gap:8px;min-width:240px}
+.idbox label{font-size:13px;font-weight:700;display:grid;gap:2px}
+.idbox input{font:inherit;font-size:16px;border:0;border-bottom:2px solid rgba(255,255,255,.6);background:transparent;color:#fff;padding:4px 0}
+.idbox input::placeholder{color:rgba(255,255,255,.7)}
+.idbox input:focus{outline:none;border-bottom-color:#fff}
+.std{font-size:13px;opacity:.9}
+@media(max-width:640px){.mh-in{grid-template-columns:1fr}.idbox{min-width:0}}
+
+.wrap{max-width:960px;margin:0 auto;padding:24px max(16px,env(safe-area-inset-right,0px)) calc(64px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:26px}
+.progress{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:15px}
+.bar{flex:1 1 220px;height:10px;background:var(--line);border-radius:5px;overflow:hidden}
+.bar span{display:block;height:100%;width:0;background:var(--red);transition:width .3s}
+.count{font-variant-numeric:tabular-nums;font-weight:700}
+
+section.part{background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.part-head{display:flex;align-items:stretch;border-bottom:1px solid var(--line)}
+.part-letter{font-family:var(--display);font-weight:800;font-size:36px;background:var(--ink);color:var(--card);width:62px;display:grid;place-items:center;flex:none}
+.part-title{padding:12px 14px;flex:1;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.part-title h2{font-size:28px}
+.kicker{font-size:14px;color:var(--muted);font-weight:700}
+.part-score{align-self:center;margin-right:14px;font-size:14px;padding:4px 10px;border:1px solid var(--line);border-radius:20px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.part-score.done{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.part-body{padding:18px;display:flex;flex-direction:column;gap:16px}
+.intro{margin:0;max-width:68ch}
+@media(max-width:520px){.part-score{display:none}.part-title h2{font-size:24px}}
+
+/* Explorer */
+.seg{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.seg b{font-family:var(--display);margin-right:4px}
+.segbtn{font:inherit;font-size:16px;padding:8px 14px;min-height:44px;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);border-radius:22px;cursor:pointer}
+.segbtn[aria-pressed=true]{background:var(--ink);color:var(--card)}
+.board{border:2px solid var(--ink);border-radius:10px;padding:16px;background:var(--bg);display:flex;flex-direction:column;gap:14px}
+.flow{display:flex;align-items:stretch;gap:0}
+.node{font:inherit;color:var(--ink);text-align:left;flex:1 1 0;background:var(--card);border:2px solid var(--line);border-radius:8px;padding:10px;cursor:pointer;display:flex;flex-direction:column;gap:4px;min-height:132px;transition:border-color .2s,background .2s,transform .2s}
+.node .n{font-family:var(--display);font-weight:800;font-size:18px}
+.node .num{font-size:13px;color:var(--muted);font-weight:700}
+.node .dev{font-size:14px;color:var(--muted);line-height:1.35}
+.node .form{margin-top:auto;font-size:13px;font-weight:700;padding:3px 8px;border-radius:4px;background:var(--bg);align-self:flex-start}
+.node.sel{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink)}
+.node.lit{border-color:var(--red);background:var(--red-soft);transform:translateY(-3px)}
+.node.lit .form{background:var(--red);color:var(--red-ink)}
+.node:focus-visible,.opt:focus-visible,.btn:focus-visible,.segbtn:focus-visible,.step:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.arrow{flex:0 0 22px;display:grid;place-items:center;color:var(--muted)}
+.arrow svg{width:18px;height:18px}
+.chan{flex:0 0 86px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;color:var(--wave);font-weight:700;text-align:center}
+.chan svg{width:78px;height:26px}
+.chan.lit svg path{stroke:var(--red)}
+.chan small{color:var(--muted);font-weight:400}
+.bottom{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:stretch}
+.bottom .node{min-height:0;flex-direction:row;flex-wrap:wrap;align-items:center;column-gap:12px}
+.bottom .node .form{margin-top:0}
+.sendbox{display:flex;flex-direction:column;gap:6px;justify-content:center}
+.readout{font-size:15px;min-height:1.5em}
+.readout b{font-family:var(--display)}
+@media(max-width:760px){
+  .flow{flex-direction:column}
+  .node{min-height:0}
+  .arrow{flex-basis:22px}
+  .arrow svg{transform:rotate(90deg)}
+  .chan{flex-basis:auto;flex-direction:row;gap:10px;padding:4px 0}
+  .chan svg{transform:rotate(90deg);width:40px}
+  .bottom{grid-template-columns:1fr}
+}
+.panel{border:2px solid var(--ink);border-radius:10px;overflow:hidden}
+.p-top{padding:16px 18px;background:var(--red-soft)}
+.p-top h3{font-size:30px;color:light-dark(#0F6E66,#5FD3C4)}
+.p-top p{margin:6px 0 0}
+.p-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-top:1px solid var(--line)}
+.p-grid>div{padding:14px 18px}
+.p-grid>div+div{border-left:1px solid var(--line)}
+.p-grid h4{margin:0 0 6px;font-family:var(--display);font-size:18px}
+.p-grid ul{margin:0;padding-left:20px;display:grid;gap:4px}
+@media(max-width:600px){.p-grid{grid-template-columns:1fr}.p-grid>div+div{border-left:0;border-top:1px solid var(--line)}}
+.noise{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:center;border:1.5px dashed var(--wave);border-radius:8px;padding:12px 16px}
+.noise svg{width:64px;height:40px;color:var(--wave)}
+.noise b{font-family:var(--display);font-size:18px}
+.noise p{margin:2px 0 0}
+
+/* Questions */
+.qgrid{display:grid;gap:14px;grid-template-columns:1fr}
+.qgrid.compact{grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
+.q{border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--card)}
+.q.right{border-color:var(--good);background:var(--good-soft)}
+.q.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.q-num{font-size:13px;color:var(--muted);font-weight:700}
+.q-prompt{font-weight:700;margin:0}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{font:inherit;font-size:16px;padding:9px 14px;min-height:44px;cursor:pointer;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);border-radius:6px;text-align:left}
+.opt:hover:not(:disabled){background:var(--bg)}
+.opt:disabled{cursor:default;opacity:.5}
+.opt.is-right{background:var(--good);border-color:var(--good);color:var(--card);opacity:1}
+.opt.is-pick-wrong{background:var(--bad);border-color:var(--bad);color:var(--card);opacity:1}
+.why{margin:0;font-size:15px}
+.why b{font-family:var(--display);margin-right:6px}
+
+/* Ordering */
+.order{border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.order h3{font-size:21px}
+.order-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media(max-width:640px){.order-cols{grid-template-columns:1fr}}
+.col-h{font-size:14px;font-weight:700;color:var(--muted);margin-bottom:6px}
+.pool,.placed{display:flex;flex-direction:column;gap:8px;min-height:60px}
+.step{font:inherit;font-size:16px;text-align:left;padding:10px 12px;min-height:44px;border:1.5px solid var(--ink);border-radius:6px;background:var(--card);color:var(--ink);cursor:pointer}
+.step:hover:not(:disabled){background:var(--bg)}
+.slot{display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px;align-items:start;padding:8px 10px;border:1.5px solid var(--line);border-radius:6px;font-size:16px;background:var(--card)}
+.slot .k{font-family:var(--display);font-weight:800;font-size:18px}
+.slot small{display:block;font-weight:700;font-size:13px}
+.slot.right{border-color:var(--good);background:var(--good-soft)}
+.slot.right small{color:var(--good)}
+.slot.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.slot.wrong small{color:var(--bad)}
+.empty{color:var(--muted);font-size:15px;padding:8px 0}
+.order .actions{gap:8px}
+
+/* Fields */
+.field{display:flex;flex-direction:column;gap:6px}
+.field>label{font-weight:700}
+.field small{color:var(--muted);font-size:14px}
+.field select,.field input,.field textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);padding:9px 10px;border-radius:6px;width:100%;min-height:44px}
+.field textarea{min-height:92px;resize:vertical}
+.field select:focus,.field input:focus,.field textarea:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 20%,transparent)}
+.row2{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.trace{display:grid;gap:10px}
+.trace .field{display:grid;grid-template-columns:150px minmax(0,1fr);align-items:center;gap:10px}
+.trace .field label{font-family:var(--display);font-weight:800}
+.trace .field label small{display:block;font-family:var(--body);font-weight:400;font-size:13px}
+@media(max-width:560px){.trace .field{grid-template-columns:1fr;gap:4px}}
+
+/* Results */
+.results{border:2px solid var(--ink);border-radius:8px;background:var(--card);overflow:hidden}
+.results-head{background:var(--ink);color:var(--card);padding:14px 18px;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
+.results-head h2{font-size:28px}
+.big{font-family:var(--display);font-size:38px;font-weight:800;font-variant-numeric:tabular-nums}
+.results-body{padding:18px;display:flex;flex-direction:column;gap:14px}
+.tally{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.tally div{padding:10px 12px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:2px;font-size:14px;color:var(--muted)}
+.tally strong{font-size:19px;color:var(--ink);font-variant-numeric:tabular-nums}
+.checklist{margin:0;padding-left:20px;color:var(--muted)}
+.checklist li.ok{color:var(--good)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{font-family:var(--display);font-weight:800;font-size:18px;padding:10px 20px;min-height:44px;border:2px solid var(--red);background:var(--red);color:var(--red-ink);cursor:pointer;border-radius:6px}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--ink)}
+.btn.sm{font-size:16px;padding:6px 14px}
+.status{font-size:15px;color:var(--good)}
+#copyText{width:100%;min-height:160px;font:13px/1.45 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);color:var(--ink);border:1px solid var(--line);padding:10px;border-radius:6px}
+.confirm{border:1.5px solid var(--bad);background:var(--bad-soft);padding:12px;border-radius:6px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+@media(prefers-reduced-motion:reduce){.bar span,.node{transition:none}.node.lit{transform:none}.onair i{animation:none}}
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="mh-in">
+    <div>
+      <span class="onair"><i></i>Incoming signal</span>
+      <h1>Follow the Signal</h1>
+      <p>Every text, phone call, TV show, and letter goes on the same trip through six parts of a communication system. Watch a message make the trip, learn what each part does, then trace one yourself. Your first click on each question counts.</p>
+    </div>
+    <div class="idbox">
+      <label>Name<input id="stuName" autocomplete="name" placeholder="First and last"></label>
+      <label>Period / class<input id="stuPeriod" placeholder="e.g. Period 3"></label>
+      <span class="std">Standard 7.MS-ETS3-1(MA)</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="progress" aria-live="polite">
+    <b>Progress</b>
+    <div class="bar"><span id="barFill"></span></div>
+    <span class="count" id="progCount">0 / 0</span>
+  </div>
+
+  <section class="part" id="partA">
+    <div class="part-head">
+      <div class="part-letter">A</div>
+      <div class="part-title"><span class="kicker">Explore</span><h2>Meet the Six Parts</h2></div>
+      <span class="part-score" id="scoreA"></span>
+    </div>
+    <div class="part-body">
+      <p class="intro">A <strong>communication system</strong> moves information from one place to another. It needs six parts working together. Pick a system, press <strong>Send it</strong> to watch the message travel, then tap each part to learn its job. Open all six parts before you answer the questions.</p>
+      <div class="seg" id="sysSeg"><b>System:</b></div>
+      <div class="board">
+        <div class="flow" id="flow"></div>
+        <div class="bottom">
+          <div id="storageHost"></div>
+          <div class="sendbox">
+            <button class="btn" id="sendBtn" type="button">Send it &#9654;</button>
+          </div>
+        </div>
+        <div class="readout" id="readout" aria-live="polite">Press <b>Send it</b> to watch the message travel.</div>
+      </div>
+      <div class="panel" id="panel" aria-live="polite"></div>
+      <div class="noise">
+        <svg viewBox="0 0 64 40" aria-hidden="true"><path d="M2 20 L8 8 L13 30 L19 4 L24 34 L30 12 L35 26 L41 6 L46 32 L52 14 L57 24 L62 20" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/></svg>
+        <div><b>Watch out for noise</b><p>The <strong>channel</strong> is the path between the transmitter and the receiver, like air, wires, cable, or a mail route. <strong>Noise</strong> is anything that gets in the way and changes or blocks the message: static, a weak signal, background sound, a typo, or a crackly speaker. Noise isn't one of the six parts, but it can happen anywhere along the way.</p></div>
+      </div>
+      <div class="qgrid compact" id="gridA"></div>
+    </div>
+  </section>
+
+  <div id="partsMid" style="display:flex;flex-direction:column;gap:26px"></div>
+
+  <section class="part" id="partC">
+    <div class="part-head">
+      <div class="part-letter">C</div>
+      <div class="part-title"><span class="kicker">Trace</span><h2>Put It in Order</h2></div>
+      <span class="part-score" id="scoreC"></span>
+    </div>
+    <div class="part-body">
+      <p class="intro">The steps are scrambled. Tap them in the order the message travels. When every step is placed, the system checks your order. Use <strong>Undo</strong> if you tap the wrong one before you finish.</p>
+      <div id="orders" style="display:flex;flex-direction:column;gap:16px"></div>
+    </div>
+  </section>
+
+  <div id="partsLow" style="display:flex;flex-direction:column;gap:26px"></div>
+
+  <section class="part" id="partE">
+    <div class="part-head">
+      <div class="part-letter">E</div>
+      <div class="part-title"><span class="kicker">Explain</span><h2>Trace It Yourself</h2></div>
+      <span class="part-score" id="scoreE"></span>
+    </div>
+    <div class="part-body">
+      <p class="intro">Pick a communication system that wasn't in this worksheet. Name the real thing that does each job, then answer the big questions in full sentences.</p>
+      <div class="field" style="max-width:420px">
+        <label for="e_sys">My system</label>
+        <select id="e_sys" data-text>
+          <option value="">Choose one</option>
+          <option>Video game voice chat</option>
+          <option>Smart doorbell camera</option>
+          <option>Drive-thru speaker</option>
+          <option>Walkie-talkies</option>
+          <option>Baby monitor</option>
+          <option>My own idea (name it in Source)</option>
+        </select>
+      </div>
+      <div class="trace">
+        <div class="field"><label for="e_src">Source<small>Where it starts</small></label><input id="e_src" data-text placeholder="Who or what has the message?"></div>
+        <div class="field"><label for="e_enc">Encoder<small>Changes it to send</small></label><input id="e_enc" data-text placeholder="What turns the message into a signal or code?"></div>
+        <div class="field"><label for="e_tx">Transmitter<small>Sends it out</small></label><input id="e_tx" data-text placeholder="What sends the signal through the channel?"></div>
+        <div class="field"><label for="e_rx">Receiver<small>Picks it up</small></label><input id="e_rx" data-text placeholder="What catches the signal at the other end?"></div>
+        <div class="field"><label for="e_dec">Decoder<small>Changes it back</small></label><input id="e_dec" data-text placeholder="What turns it back into something people understand?"></div>
+        <div class="field"><label for="e_sto">Storage<small>Saves it</small></label><input id="e_sto" data-text placeholder="Where could the message be saved for later?"></div>
+      </div>
+      <div class="field">
+        <label for="e_noise">1. What could be noise in your system? How would it change the message?</label>
+        <textarea id="e_noise" data-text placeholder="Noise in my system could be… It would make the message…"></textarea>
+      </div>
+      <div class="field">
+        <label for="e_fail">2. Pick one part of your system. What would happen if it failed?</label>
+        <textarea id="e_fail" data-text placeholder="If the ___ failed, then…"></textarea>
+      </div>
+      <div class="field">
+        <label for="e_eq">3. Big question: Why does a communication system need multiple parts instead of just one?</label>
+        <textarea id="e_eq" data-text placeholder="A communication system needs multiple parts because…"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <section class="results" id="results">
+    <div class="results-head">
+      <h2>Results Sheet</h2>
+      <span class="big" id="bigScore">0 / 0</span>
+    </div>
+    <div class="results-body">
+      <div class="tally" id="tally"></div>
+      <ul class="checklist" id="checklist"></ul>
+      <p class="intro">When you are finished, copy your answers and paste them into the assignment your teacher posted.</p>
+      <div class="actions">
+        <button class="btn" id="copyBtn" type="button">Copy my answers</button>
+        <button class="btn ghost" id="resetBtn" type="button">Start over</button>
+        <span class="status" id="copyStatus" aria-live="polite"></span>
+      </div>
+      <div class="confirm" id="confirmBox" hidden>
+        <span>This erases every answer on this device. Are you sure?</span>
+        <button class="btn" id="confirmYes" type="button">Yes, erase</button>
+        <button class="btn ghost" id="confirmNo" type="button">Keep my work</button>
+      </div>
+      <textarea id="copyText" readonly hidden aria-label="Your answers as text"></textarea>
+    </div>
+  </section>
+</div>
+
+<script>
+{
+const COMPS = [
+  { key:"source", name:"Source", job:"Where the message starts. The source is the person or thing that has information to send.",
+    like:"The person who has something to say.", ask:"Who or what is sending the message?",
+    more:["Can be a person, like you talking or typing.","Can be a machine, like a smoke detector or a weather sensor.","Without a source, there's nothing to send."] },
+  { key:"encoder", name:"Encoder", job:"Changes the message into a form that can travel, like electrical signals, digital code (1s and 0s), or written symbols.",
+    like:"A translator turning your words into a code the system understands.", ask:"What turns the message into a signal or code?",
+    more:["A microphone turns sound into an electrical signal.","A camera turns light into a signal.","A keyboard turns letters into digital code."] },
+  { key:"transmitter", name:"Transmitter", job:"Sends the encoded message out through a channel: air, wires, cable, or a delivery route.",
+    like:"The quarterback throwing the ball.", ask:"What sends the signal on its way?",
+    more:["A phone's antenna sends radio waves.","A cell tower or radio tower broadcasts signals.","A mail carrier transmits a letter."] },
+  { key:"receiver", name:"Receiver", job:"Picks up the signal at the other end of the channel.",
+    like:"The receiver catching the pass.", ask:"What catches the signal when it arrives?",
+    more:["A TV antenna or satellite dish.","The antenna inside your friend's phone.","A mailbox receiving a letter."] },
+  { key:"decoder", name:"Decoder", job:"Changes the signal back into a form people can understand: sound, pictures, or words.",
+    like:"A translator at the other end turning the code back into words.", ask:"What turns the signal back into something people understand?",
+    more:["A speaker turns an electrical signal back into sound.","A screen turns code into pictures and letters.","A person reading a letter decodes the written words into meaning."] },
+  { key:"storage", name:"Storage", job:"Saves the message so it can be used later. Storage can happen at the sending end, the receiving end, or both.",
+    like:"A locker that holds your stuff until you need it.", ask:"Where is the message saved for later?",
+    more:["Voicemail, a DVR, or a saved chat history.","A hard drive, flash drive, or the cloud.","Paper itself: a letter or a book stores words for years."] }
+];
+const CBY = Object.fromEntries(COMPS.map(c => [c.key, c]));
+const CNAMES = COMPS.map(c => c.name);
+
+const SYSTEMS = [
+  { key:"phone", name:"Phone call", parts:{
+    source:["You, talking","“Want to hang out?”"], encoder:["Phone microphone and chip","voice → digital code"],
+    transmitter:["Your phone's antenna and the cell tower","radio waves"], receiver:["Your friend's phone antenna","radio waves caught"],
+    decoder:["Your friend's phone speaker","code → your voice"], storage:["Voicemail","saved to hear later"] }},
+  { key:"text", name:"Text message", parts:{
+    source:["You, typing","“on my way”"], encoder:["Phone keyboard and software","letters → 1s and 0s"],
+    transmitter:["Your phone's antenna and the cell network","radio waves"], receiver:["Your friend's phone antenna","signal caught"],
+    decoder:["Your friend's phone software and screen","1s and 0s → letters"], storage:["Chat history and the cloud","saved in the chat"] }},
+  { key:"tv", name:"TV broadcast", parts:{
+    source:["News anchor in the studio","“Snow day tomorrow!”"], encoder:["Studio cameras and microphones","picture and sound → signal"],
+    transmitter:["Broadcast tower or satellite","signal sent out"], receiver:["TV antenna or cable box","signal caught"],
+    decoder:["TV screen and speakers","signal → picture and sound"], storage:["DVR or streaming replay","recorded for later"] }},
+  { key:"letter", name:"Letter", parts:{
+    source:["The writer","an idea to share"], encoder:["Writing words on paper","idea → written words"],
+    transmitter:["Post office and mail carrier","carried by truck"], receiver:["Mailbox at the other house","letter arrives"],
+    decoder:["The reader reading the words","words → meaning"], storage:["Letter kept in a drawer","kept for years"] }}
+];
+const SBY = Object.fromEntries(SYSTEMS.map(s => [s.key, s]));
+
+const SECTIONS = [
+  { key:"A", host:"gridA", inline:true, title:"Meet the Six Parts", qs:[
+    { id:"a1", p:"Which part changes the message into a signal or code that can travel?", o:CNAMES, a:1, why:"Encoding means changing a message into a form that can be sent." },
+    { id:"a2", p:"Which part is where the message starts?", o:CNAMES, a:0, why:"The source has the information to send." },
+    { id:"a3", p:"Which part picks up the signal at the other end?", o:CNAMES, a:3, why:"The receiver catches what the transmitter sent." },
+    { id:"a4", p:"Which part saves the message so someone can use it later?", o:CNAMES, a:5, why:"Storage keeps a message for later, like voicemail or a saved file." },
+    { id:"a5", p:"Which part sends the message out through the channel?", o:CNAMES, a:2, why:"The transmitter sends the signal on its way." },
+    { id:"a6", p:"Which part turns the signal back into sound, pictures, or words people understand?", o:CNAMES, a:4, why:"Decoding undoes what the encoder did." }
+  ]},
+  { key:"B", host:"partsMid", kicker:"Identify", title:"Name That Part", compact:true,
+    intro:"Each item is a real device or person doing one job in a communication system. Name the part.", qs:[
+    { id:"b1", p:"A microphone turns your voice into an electrical signal.", o:CNAMES, a:1, why:"Changing sound into a signal is encoding." },
+    { id:"b2", p:"A TV antenna on the roof picks up the broadcast signal.", o:CNAMES, a:3, why:"The antenna catches the signal, so it's the receiver." },
+    { id:"b3", p:"A tall cell tower sends signals out to phones across town.", o:CNAMES, a:2, why:"The tower sends the signal through the air. It's a transmitter." },
+    { id:"b4", p:"A DVR records a show so you can watch it this weekend.", o:CNAMES, a:5, why:"Recording to watch later is storage." },
+    { id:"b5", p:"Your headphones turn a signal into music you can hear.", o:CNAMES, a:4, why:"Turning the signal back into sound is decoding." },
+    { id:"b6", p:"A coach decides to call a play to the team.", o:CNAMES, a:0, why:"The coach has the message to send, so the coach is the source." },
+    { id:"b7", p:"A telegraph operator taps a message into Morse code dots and dashes.", o:CNAMES, a:1, why:"Turning words into dots and dashes is encoding." },
+    { id:"b8", p:"A walkie-talkie's antenna catches your friend's signal.", o:CNAMES, a:3, why:"Catching an incoming signal is the receiver's job." }
+  ]},
+  { key:"D", host:"partsLow", kicker:"Troubleshoot", title:"What Broke?",
+    intro:"When one part fails, the whole system can fail. Read each problem and decide which part failed, or whether it was noise.", qs:[
+    { id:"d1", p:"Your phone's microphone is broken. The call connects, but your friend hears nothing.", o:[...CNAMES,"Noise"], a:1, why:"The microphone is the encoder. Your voice never gets turned into a signal, so there's nothing to send." },
+    { id:"d2", p:"Your friend's phone speaker is broken. The call connects, but your friend hears nothing.", o:[...CNAMES,"Noise"], a:4, why:"This time the signal arrives fine, but the speaker can't turn it back into sound. That's the decoder. Compare it to the problem above." },
+    { id:"d3", p:"A storm knocks the TV antenna off your roof, and the screen says “No signal.”", o:[...CNAMES,"Noise"], a:3, why:"The station is still broadcasting, but nothing at your house catches the signal. The receiver failed." },
+    { id:"d4", p:"The radio station's tower loses power. Nobody in town can hear the station.", o:[...CNAMES,"Noise"], a:2, why:"The transmitter can't send, so every receiver gets nothing. One failure affects everyone." },
+    { id:"d5", p:"You're on a call in the car. In a tunnel, your friend's voice gets crackly and cuts in and out.", o:[...CNAMES,"Noise"], a:6, why:"Nothing is broken. The tunnel weakens the signal in the channel. That interference is noise." },
+    { id:"d6", p:"Your phone's memory is full, so the video you just recorded won't save.", o:[...CNAMES,"Noise"], a:5, why:"There's no room to store the message for later. Storage failed." },
+    { id:"d7", p:"In a game of Telephone, “purple dinosaur” turns into “purse full of soar” by the end of the line.", o:[...CNAMES,"Noise"], a:6, why:"Whispering, background sounds, and mishearing change the message a little at each step. That's noise, and it's why accuracy gets worse." },
+    { id:"d8", p:"The school's automatic phone system works perfectly, but nobody recorded the snow-day message, so families get no call.", o:[...CNAMES,"Noise"], a:0, why:"Every machine works, but there's no message to send. The source is missing." }
+  ]}
+];
+
+const ORDERS = [
+  { id:"o1", title:"Sending a photo to a friend", steps:[
+    ["source","You decide to share a photo of your dog."],
+    ["encoder","Your phone turns the photo into digital code (1s and 0s)."],
+    ["transmitter","Your phone's antenna sends the code out as radio waves to a cell tower."],
+    ["receiver","Your friend's phone antenna picks up the signal."],
+    ["decoder","Your friend's phone turns the code back into a picture on the screen."],
+    ["storage","The photo is saved in your friend's camera roll to look at later."] ],
+    scramble:[3,5,1,4,0,2] },
+  { id:"o2", title:"A radio DJ announcing a snow day", steps:[
+    ["source","The DJ decides to announce that school is cancelled."],
+    ["encoder","The studio microphone turns the DJ's voice into an electrical signal."],
+    ["transmitter","The station's tall tower sends the signal out as radio waves."],
+    ["receiver","Your car's antenna picks up the radio waves."],
+    ["decoder","Your car radio turns the signal back into sound through the speakers."] ],
+    scramble:[2,4,0,3,1] }
+];
+const ORDER_TOTAL = ORDERS.reduce((t,o) => t + o.steps.length, 0);
+
+const TEXT_IDS = ["e_sys","e_src","e_enc","e_tx","e_rx","e_dec","e_sto","e_noise","e_fail","e_eq"];
+const TEXT_LABELS = { e_sys:"System", e_src:"Source", e_enc:"Encoder", e_tx:"Transmitter", e_rx:"Receiver", e_dec:"Decoder", e_sto:"Storage",
+  e_noise:"1. Noise in my system", e_fail:"2. If one part failed", e_eq:"3. Why a system needs multiple parts" };
+const STORE_KEY = "follow-the-signal-worksheet-v1";
+const blank = () => ({ answers:{}, text:{}, order:{}, seen:[], sys:"phone", comp:"source", name:"", period:"" });
+let state = blank();
+function load(){ try{ const r = localStorage.getItem(STORE_KEY); if(r) state = Object.assign(blank(), JSON.parse(r)); }catch(e){} }
+function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
+
+const allQs = SECTIONS.flatMap(s => s.qs);
+const qById = Object.fromEntries(allQs.map(q => [q.id, q]));
+const ARROW = `<span class="arrow" aria-hidden="true"><svg viewBox="0 0 18 18"><path d="M3 9h11M10 4l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
+
+/* Explorer */
+function nodeHTML(c, i){
+  return `<button class="node" type="button" id="node_${c.key}" data-c="${c.key}"><span class="num">${i+1}</span><span class="n">${c.name}</span><span class="dev" id="dev_${c.key}"></span><span class="form" id="form_${c.key}"></span></button>`;
+}
+function renderExplorer(){
+  document.getElementById("sysSeg").insertAdjacentHTML("beforeend", SYSTEMS.map(s =>
+    `<button class="segbtn" type="button" data-s="${s.key}" aria-pressed="false">${s.name}</button>`).join(""));
+  const f = COMPS.slice(0,5);
+  document.getElementById("flow").innerHTML =
+    nodeHTML(f[0],0) + ARROW + nodeHTML(f[1],1) + ARROW + nodeHTML(f[2],2) +
+    `<span class="chan" id="chan"><svg viewBox="0 0 78 26" aria-hidden="true"><path d="M2 13 Q8 3 14 13 T26 13 T38 13 T50 13 T62 13 T74 13" fill="none" stroke="var(--wave)" stroke-width="3"/></svg>Channel<small>noise can sneak in</small></span>` +
+    nodeHTML(f[3],3) + ARROW + nodeHTML(f[4],4);
+  document.getElementById("storageHost").innerHTML = nodeHTML(COMPS[5],5).replace('class="node"','class="node" style="height:100%"');
+  document.getElementById("sysSeg").addEventListener("click", e => {
+    const b = e.target.closest(".segbtn"); if(!b) return;
+    state.sys = b.dataset.s; save(); paintExplorer();
+  });
+  document.querySelector(".board").addEventListener("click", e => {
+    const n = e.target.closest(".node"); if(!n) return;
+    state.comp = n.dataset.c; save(); paintExplorer();
+  });
+  document.getElementById("sendBtn").addEventListener("click", sendAnim);
+}
+let timer = null;
+function sendAnim(){
+  clearTimeout(timer);
+  const sys = SBY[state.sys], seq = ["source","encoder","transmitter","chan","receiver","decoder","storage"];
+  const btn = document.getElementById("sendBtn"), out = document.getElementById("readout");
+  btn.disabled = true;
+  let i = 0;
+  const step = () => {
+    document.querySelectorAll(".node.lit,.chan.lit").forEach(n => n.classList.remove("lit"));
+    if(i >= seq.length){ btn.disabled = false; out.innerHTML = `Message delivered! Tap any part to learn its job.`; return; }
+    const k = seq[i];
+    if(k === "chan"){ document.getElementById("chan").classList.add("lit"); out.innerHTML = `<b>Channel:</b> the signal travels from the transmitter to the receiver. This is where noise can get in.`; }
+    else {
+      document.getElementById("node_"+k).classList.add("lit");
+      out.innerHTML = `<b>${CBY[k].name}:</b> ${sys.parts[k][0]}. The message is now: <b>${sys.parts[k][1]}</b>`;
+    }
+    i++; timer = setTimeout(step, 1500);
+  };
+  step();
+}
+function paintExplorer(){
+  const sys = SBY[state.sys], c = CBY[state.comp];
+  if(!state.seen.includes(c.key)){ state.seen.push(c.key); save(); }
+  document.querySelectorAll(".segbtn").forEach(b => b.setAttribute("aria-pressed", b.dataset.s === state.sys));
+  COMPS.forEach(x => {
+    document.getElementById("dev_"+x.key).textContent = sys.parts[x.key][0];
+    document.getElementById("form_"+x.key).textContent = sys.parts[x.key][1];
+    const n = document.getElementById("node_"+x.key);
+    n.classList.toggle("sel", x.key === c.key);
+    n.setAttribute("aria-label", `${x.name}${state.seen.includes(x.key) ? ", viewed" : ""}`);
+  });
+  document.getElementById("panel").innerHTML = `
+    <div class="p-top"><h3>${COMPS.indexOf(c)+1}. ${c.name}</h3><p><strong>Its job:</strong> ${c.job}</p><p><strong>Think of it like:</strong> ${c.like}</p></div>
+    <div class="p-grid">
+      <div><h4>In a ${sys.name.toLowerCase()}</h4><p style="margin:0">${sys.parts[c.key][0]}. The message becomes: <strong>${sys.parts[c.key][1]}</strong>.</p><p style="margin:8px 0 0;color:var(--muted);font-size:15px">Ask yourself: ${c.ask}</p></div>
+      <div><h4>More examples</h4><ul>${c.more.map(m => `<li>${m}</li>`).join("")}</ul></div>
+    </div>`;
+  update();
+}
+
+/* Question sections */
+function qCard(sec, q, i){
+  return `<div class="q" id="q_${q.id}"><span class="q-num">${sec.key}${i+1}</span><p class="q-prompt">${q.p}</p>
+    <div class="opts">${q.o.map((l,j) => `<button class="opt" type="button" data-q="${q.id}" data-i="${j}">${l}</button>`).join("")}</div>
+    <p class="why" hidden></p></div>`;
+}
+function renderSections(){
+  SECTIONS.forEach(sec => {
+    const host = document.getElementById(sec.host);
+    const cards = sec.qs.map((q,i) => qCard(sec,q,i)).join("");
+    if(sec.inline){ host.innerHTML = cards; return; }
+    host.insertAdjacentHTML("beforeend", `<section class="part" id="part${sec.key}">
+      <div class="part-head"><div class="part-letter">${sec.key}</div>
+        <div class="part-title"><span class="kicker">${sec.kicker}</span><h2>${sec.title}</h2></div>
+        <span class="part-score" id="score${sec.key}"></span></div>
+      <div class="part-body"><p class="intro">${sec.intro}</p><div class="qgrid ${sec.compact ? "compact" : ""}">${cards}</div></div></section>`);
+  });
+  document.addEventListener("click", e => {
+    const b = e.target.closest(".opt"); if(!b) return;
+    const id = b.dataset.q, i = +b.dataset.i;
+    if(state.answers[id] !== undefined) return;
+    state.answers[id] = i; save(); paintQ(id); update();
+  });
+}
+function paintQ(id){
+  const q = qById[id], card = document.getElementById("q_"+id), pick = state.answers[id];
+  const bs = card.querySelectorAll(".opt"), why = card.querySelector(".why");
+  card.classList.remove("right","wrong");
+  bs.forEach(b => { b.classList.remove("is-right","is-pick-wrong"); b.disabled = pick !== undefined; });
+  if(pick === undefined){ why.hidden = true; return; }
+  const ok = pick === q.a;
+  card.classList.add(ok ? "right" : "wrong");
+  bs[q.a].classList.add("is-right");
+  if(!ok) bs[pick].classList.add("is-pick-wrong");
+  why.innerHTML = `<b>${ok ? "Correct!" : "Not quite."}</b>${q.why}`;
+  why.hidden = false;
+}
+
+/* Ordering */
+function renderOrders(){
+  document.getElementById("orders").innerHTML = ORDERS.map((o,i) => `
+    <div class="order" id="ord_${o.id}">
+      <h3>C${i+1}. ${o.title}</h3>
+      <div class="order-cols">
+        <div><div class="col-h">Scrambled steps: tap the next one</div><div class="pool" id="pool_${o.id}"></div></div>
+        <div><div class="col-h">Your order</div><div class="placed" id="placed_${o.id}"></div></div>
+      </div>
+      <div class="actions"><button class="btn ghost sm" type="button" id="undo_${o.id}">Undo</button><span class="why" id="res_${o.id}"></span></div>
+    </div>`).join("");
+  ORDERS.forEach(o => {
+    document.getElementById("pool_"+o.id).addEventListener("click", e => {
+      const b = e.target.closest(".step"); if(!b) return;
+      const arr = state.order[o.id] || (state.order[o.id] = []);
+      if(arr.length >= o.steps.length) return;
+      arr.push(+b.dataset.i); save(); paintOrder(o); update();
+    });
+    document.getElementById("undo_"+o.id).addEventListener("click", () => {
+      const arr = state.order[o.id] || [];
+      if(arr.length && arr.length < o.steps.length){ arr.pop(); save(); paintOrder(o); update(); }
+    });
+  });
+}
+const orderRight = o => (state.order[o.id] || []).filter((s,i) => s === i).length;
+const orderDone = o => (state.order[o.id] || []).length === o.steps.length;
+function paintOrder(o){
+  const arr = state.order[o.id] || [], done = orderDone(o);
+  document.getElementById("pool_"+o.id).innerHTML = o.scramble.filter(i => !arr.includes(i))
+    .map(i => `<button class="step" type="button" data-i="${i}">${o.steps[i][1]}</button>`).join("") || `<div class="empty">All steps placed.</div>`;
+  document.getElementById("placed_"+o.id).innerHTML = arr.map((s,pos) => {
+    const cls = done ? (s === pos ? "right" : "wrong") : "";
+    const lab = done ? `<small>${s === pos ? "✓ " + CBY[o.steps[s][0]].name : "✗ This is the " + CBY[o.steps[s][0]].name + " step. Step " + (pos+1) + " should be the " + CBY[o.steps[pos][0]].name + "."}</small>` : "";
+    return `<div class="slot ${cls}"><span class="k">${pos+1}</span><span>${o.steps[s][1]}${lab}</span></div>`;
+  }).join("") || `<div class="empty">Tap a scrambled step to start.</div>`;
+  document.getElementById("undo_"+o.id).disabled = done || !arr.length;
+  const res = document.getElementById("res_"+o.id);
+  res.innerHTML = done ? `<b>${orderRight(o) === o.steps.length ? "Perfect order!" : `${orderRight(o)} of ${o.steps.length} in the right spot.`}</b>${orderRight(o) === o.steps.length ? "The message went source → encoder → transmitter → receiver → decoder" + (o.steps.length > 5 ? " → storage." : ".") : "Check the labels to see where each step belongs."}` : "";
+}
+
+/* Progress + results */
+const textDone = id => (state.text[id] || "").trim().length > 0;
+function update(){
+  let correct = 0, answered = 0;
+  const tally = [];
+  SECTIONS.forEach(sec => {
+    const c = sec.qs.filter(q => state.answers[q.id] === q.a).length;
+    const a = sec.qs.filter(q => state.answers[q.id] !== undefined).length;
+    correct += c; answered += a;
+    const chip = document.getElementById("score"+sec.key);
+    if(chip){ chip.textContent = a === sec.qs.length ? `${c} / ${sec.qs.length} correct` : `${a} / ${sec.qs.length} answered`; chip.classList.toggle("done", a === sec.qs.length); }
+    tally.push([sec.key, `<div><span>Part ${sec.key} · ${sec.title}</span><strong>${c} / ${sec.qs.length}</strong></div>`]);
+  });
+  const oRight = ORDERS.reduce((t,o) => t + (orderDone(o) ? orderRight(o) : 0), 0);
+  const oDone = ORDERS.filter(orderDone).length;
+  const chC = document.getElementById("scoreC");
+  chC.textContent = oDone === ORDERS.length ? `${oRight} / ${ORDER_TOTAL} correct` : `${oDone} / ${ORDERS.length} done`;
+  chC.classList.toggle("done", oDone === ORDERS.length);
+  tally.push(["C", `<div><span>Part C · Put It in Order</span><strong>${oRight} / ${ORDER_TOTAL}</strong></div>`]);
+  const tDone = TEXT_IDS.filter(textDone).length;
+  const chE = document.getElementById("scoreE");
+  chE.textContent = `${tDone} / ${TEXT_IDS.length} done`; chE.classList.toggle("done", tDone === TEXT_IDS.length);
+  tally.push(["E", `<div><span>Part E · Trace It Yourself</span><strong>${tDone} / ${TEXT_IDS.length} written</strong></div>`]);
+  tally.sort((x,y) => x[0].localeCompare(y[0]));
+  document.getElementById("tally").innerHTML = tally.map(t => t[1]).join("");
+
+  const totalItems = allQs.length + ORDERS.length + TEXT_IDS.length;
+  const doneItems = answered + oDone + tDone;
+  document.getElementById("barFill").style.width = (100 * doneItems / totalItems) + "%";
+  document.getElementById("progCount").textContent = `${doneItems} / ${totalItems}`;
+  document.getElementById("bigScore").textContent = `${correct + oRight} / ${allQs.length + ORDER_TOTAL}`;
+
+  const items = [
+    [!!state.name.trim(), "Name filled in"],
+    [!!state.period.trim(), "Period filled in"],
+    [state.seen.length === COMPS.length, `All six parts opened (${state.seen.length} / 6)`],
+    [answered === allQs.length, `Parts A, B, D answered (${answered} / ${allQs.length})`],
+    [oDone === ORDERS.length, `Part C orders finished (${oDone} / ${ORDERS.length})`],
+    [tDone === TEXT_IDS.length, `Part E written (${tDone} / ${TEXT_IDS.length})`]
+  ];
+  document.getElementById("checklist").innerHTML = items.map(([ok,t]) => `<li class="${ok ? "ok" : ""}">${ok ? "✓ " : ""}${t}</li>`).join("");
+}
+
+function buildCopy(){
+  const L = [];
+  L.push("FOLLOW THE SIGNAL: COMMUNICATION SYSTEM COMPONENTS · 7.MS-ETS3-1(MA)");
+  L.push(`Name: ${state.name || "(blank)"}`, `Period: ${state.period || "(blank)"}`);
+  const correct = allQs.filter(q => state.answers[q.id] === q.a).length + ORDERS.reduce((t,o) => t + (orderDone(o) ? orderRight(o) : 0), 0);
+  L.push(`Auto-checked score: ${correct} / ${allQs.length + ORDER_TOTAL}`, "");
+  const secOut = sec => {
+    const c = sec.qs.filter(q => state.answers[q.id] === q.a).length;
+    L.push(`PART ${sec.key}: ${sec.title.toUpperCase()} (${c} / ${sec.qs.length})`);
+    sec.qs.forEach((q,i) => {
+      const pick = state.answers[q.id];
+      const mark = pick === undefined ? "–" : (pick === q.a ? "✓" : "✗");
+      L.push(`  ${sec.key}${i+1} ${mark} ${pick === undefined ? "(not answered)" : q.o[pick]}`);
+    });
+    L.push("");
+  };
+  SECTIONS.filter(s => s.key !== "D").forEach(secOut);
+  L.push("PART C: PUT IT IN ORDER");
+  ORDERS.forEach((o,i) => {
+    const arr = state.order[o.id] || [];
+    L.push(`  C${i+1} ${o.title}: ${orderDone(o) ? orderRight(o) + " / " + o.steps.length + " in the right spot" : "(not finished)"}`);
+    arr.forEach((s,pos) => L.push(`    ${pos+1}. ${s === pos ? "✓" : "✗"} ${o.steps[s][1]}`));
+  });
+  L.push("");
+  SECTIONS.filter(s => s.key === "D").forEach(secOut);
+  L.push("PART E: TRACE IT YOURSELF");
+  TEXT_IDS.forEach(id => { L.push(TEXT_LABELS[id] + ":"); L.push("  " + ((state.text[id] || "").trim() || "(blank)")); });
+  return L.join("\n");
+}
+
+function wire(){
+  const nameI = document.getElementById("stuName"), perI = document.getElementById("stuPeriod");
+  nameI.value = state.name; perI.value = state.period;
+  nameI.addEventListener("input", () => { state.name = nameI.value; save(); update(); });
+  perI.addEventListener("input", () => { state.period = perI.value; save(); update(); });
+  TEXT_IDS.forEach(id => {
+    const f = document.getElementById(id);
+    f.value = state.text[id] || "";
+    f.addEventListener(f.tagName === "SELECT" ? "change" : "input", () => { state.text[id] = f.value; save(); update(); });
+  });
+  const status = document.getElementById("copyStatus"), ta = document.getElementById("copyText");
+  document.getElementById("copyBtn").addEventListener("click", () => {
+    const text = buildCopy(); ta.value = text;
+    const fallback = () => { ta.hidden = false; ta.focus(); ta.select(); status.textContent = "Select all the text in the box and copy it."; };
+    try { navigator.clipboard.writeText(text).then(() => { ta.hidden = true; status.textContent = "Copied! Paste it into your assignment."; }, fallback); }
+    catch(e){ fallback(); }
+  });
+  const box = document.getElementById("confirmBox");
+  document.getElementById("resetBtn").addEventListener("click", () => { box.hidden = false; });
+  document.getElementById("confirmNo").addEventListener("click", () => { box.hidden = true; });
+  document.getElementById("confirmYes").addEventListener("click", () => {
+    state = blank(); save(); box.hidden = true;
+    nameI.value = ""; perI.value = "";
+    TEXT_IDS.forEach(id => { document.getElementById(id).value = ""; });
+    allQs.forEach(q => paintQ(q.id));
+    ORDERS.forEach(paintOrder);
+    ta.hidden = true; status.textContent = "";
+    paintExplorer();
+    window.scrollTo({ top: 0 });
+  });
+}
+
+load();
+renderExplorer();
+renderSections();
+renderOrders();
+allQs.forEach(q => paintQ(q.id));
+ORDERS.forEach(paintOrder);
+wire();
+paintExplorer();
+}
+</script>
+</body>
+</html>
